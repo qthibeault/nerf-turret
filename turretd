@@ -1,3 +1,3 @@
 #!/bin/bash
 
-pipenv run python3 src/turretd.py "$@"
+GPIOZERO_PIN_FACTORY=pigpio pipenv run python3 src/turretd.py "$@"
