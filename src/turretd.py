@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import socket
 import logging
