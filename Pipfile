@@ -11,6 +11,7 @@ smbus2 = "*"
 gpiozero = "*"
 pigpio = "*"
 nerf-turret-client = {editable = true, git = "https://github.com/qthibeault/nerf-turret-client"}
+click = "*"
 
 [dev-packages]
 
