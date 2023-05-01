@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[requires]
+python_version = "3.9"
+
+[packages]
+smbus2 = "*"
+gpiozero = "*"
+pigpio = "*"
+
+[dev-packages]
+
+[tools]
+textual = "*"
+
+[scripts]
+stepperctl = "python3 stepperctl.py"
