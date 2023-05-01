@@ -15,8 +15,5 @@ click = "*"
 
 [dev-packages]
 
-[tools]
-textual = "*"
-
 [scripts]
 stepperctl = "python3 stepperctl.py"
