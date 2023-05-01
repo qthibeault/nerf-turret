@@ -164,6 +164,8 @@ def main(
         max_pulse_width=0.0025,
     )
     motor_relay = gpiozero.DigitalOutputDevice(pin_motor_relay)
+    motor_relay.off()
+
     turret = Turret(base_stepper, elev_servo, trigger_servo, motor_relay)
     logger.debug("Configured turret modules")
 
