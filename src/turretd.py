@@ -21,6 +21,14 @@ class Turret:
     motor_relay: gpiozero.DigitalOutputDevice
     shots: int = dc.field(default=0, init=False)
 
+    @property
+    def base_angle(self) -> float:
+        return self.base_stepper.angle
+
+    @property
+    def elev_angle(self) -> float:
+        return self.elev_servo.angle
+
     def move(self, base_angle: float, elev_angle: float):
         self.base_stepper.angle = base_angle
         self.elev_servo.angle = elev_angle
@@ -39,24 +47,39 @@ class Turret:
         self.shots += n
 
 
-def _handle_msg(msg_bytes: bytes, turret: Turret):
+def _handle_msg(msg_bytes: bytes, turret: Turret) -> msgs.StatusMsg | None:
     try:
         msg = msgs.decode(msg_bytes, msgs.MoveMsg)
-        logger.debug(f"Recieved move message: {msg}")
+        logger.debug(f"Recieved move command: {msg}")
         turret.move(msg.base_angle, msg.elev_angle)
-        return
+        return None
     except:
         pass
 
     try:
         msg = msgs.decode(msg_bytes, msgs.ShootMsg)
-        logger.debug(f"Recieved shoot message: {msg}")
+        logger.debug(f"Recieved shoot command: {msg}")
         turret.shoot(msg.times)
-        return
+        return None
     except:
         pass
 
-    raise ValueError("Unsupported message")
+    try:
+        msg = msgs.decode(msg_bytes, msgs.RequestStatusMsg)
+        logger.debug("Recieved status request")
+        return msgs.StatusMsg(turret.base_angle, turret.elev_angle, turret.shots)
+    except:
+        pass
+
+    try:
+        msg = msgs.decode(msg_bytes, msgs.ResetMsg)
+        logger.debug("Recieved reset command")
+        turret.move(0, 0)
+        turret.shots = 0
+    except:
+        pass
+
+    raise ValueError("Unsupported command")
 
 
 def _handle_connection(conn: socket.socket, turret: Turret):
@@ -67,9 +90,11 @@ def _handle_connection(conn: socket.socket, turret: Turret):
             break
 
         try:
-            _handle_msg(msg_bytes, turret)
+            resp = _handle_msg(msg_bytes, turret)
 
-            resp = msgs.AckMsg()
+            if resp is None:
+                resp = msgs.AckMsg()
+
             resp_bytes = msgs.encode(resp)
             conn.send(resp_bytes)
         except ValueError as e:
