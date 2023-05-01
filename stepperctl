@@ -1,4 +1,0 @@
-#!/bin/bash
-
-pipenv run python3 src/stepperctl.py
-raspi-gpio set 22,23,24,27 op dl
