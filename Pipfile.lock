@@ -110,7 +110,7 @@
         "nerf-turret-client": {
             "editable": true,
             "git": "https://github.com/qthibeault/nerf-turret-client",
-            "ref": "58c0e0b66cdbf4671db40b28828a02237c4564ea"
+            "ref": "5c947e5a148dffba9fecca4585e9d7d2e5989603"
         },
         "pigpio": {
             "hashes": [
