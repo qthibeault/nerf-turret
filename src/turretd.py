@@ -37,13 +37,13 @@ class Turret:
 
     def shoot(self, n: int = 1):
         self.motor_relay.on()
-        time.sleep(0.1)
+        time.sleep(0.5)
 
         for _ in range(n):
             self.trigger_servo.angle = -33
-            time.sleep(0.1)
+            time.sleep(1.0)
             self.trigger_servo.angle = 0
-            time.sleep(0.1)
+            time.sleep(1.0)
 
         self.motor_relay.off()
         self.shots += n
@@ -55,31 +55,32 @@ def _handle_msg(msg_bytes: bytes, turret: Turret) -> msgs.StatusMsg | None:
         logger.debug(f"Recieved move command: {msg}")
         turret.move(msg.base_angle, msg.elev_angle)
         return None
-    except:
-        pass
+    except Exception as e:
+        logger.debug(e)
 
     try:
         msg = msgs.decode(msg_bytes, msgs.ShootMsg)
         logger.debug(f"Recieved shoot command: {msg}")
         turret.shoot(msg.times)
         return None
-    except:
-        pass
+    except Exception as e:
+        logger.debug(e)
 
     try:
         msg = msgs.decode(msg_bytes, msgs.RequestStatusMsg)
         logger.debug("Recieved status request")
         return msgs.StatusMsg(turret.base_angle, turret.elev_angle, turret.shots)
-    except:
-        pass
+    except Exception as e:
+        logger.debug(e)
 
     try:
         msg = msgs.decode(msg_bytes, msgs.ResetMsg)
         logger.debug("Recieved reset command")
         turret.move(0, 0)
         turret.shots = 0
-    except:
-        pass
+        return None
+    except Exception as e:
+        logger.debug(e)
 
     raise ValueError("Unsupported command")
 
@@ -147,7 +148,11 @@ def main(
     bus = smbus2.SMBus(i2c_bus)
     enc = encoder.Encoder(bus)
     base_stepper = stepper.BaseStepper(
-        step_pin=pin_base_step, dir_pin=pin_base_dir, encoder=enc, offset=279.76
+        step_pin=pin_base_step,
+        dir_pin=pin_base_dir,
+        encoder=enc,
+        delay=0.01,
+        offset=279.76,
     )
     elev_servo = gpiozero.AngularServo(
         pin=pin_elev_servo,
