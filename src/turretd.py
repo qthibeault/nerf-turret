@@ -4,6 +4,7 @@ import dataclasses as dc
 import socket
 import logging
 import time
+import typing as tp
 
 import click
 import encoder
@@ -48,39 +49,47 @@ class Turret:
         self.motor_relay.off()
         self.shots += n
 
+    def reset(self) -> None:
+        self.move(0, 0)
+        self.shots = 0
+
+
+def _try_decode(msg_bytes: bytes, msg_type: tp.Type[msgs.M]) -> msgs.M | None:
+    try:
+        msg = msgs.decode(msg_bytes, msg_type)
+    except (msgs.MsgError, msgs.DecodeError):
+        return None
+    else:
+        return msg
+
 
 def _handle_msg(msg_bytes: bytes, turret: Turret) -> msgs.StatusMsg | None:
-    try:
-        msg = msgs.decode(msg_bytes, msgs.MoveMsg)
+    msg = _try_decode(msg_bytes, msgs.MoveMsg)
+
+    if msg is not None:
         logger.debug(f"Recieved move command: {msg}")
         turret.move(msg.base_angle, msg.elev_angle)
         return None
-    except Exception as e:
-        logger.debug(e)
 
-    try:
-        msg = msgs.decode(msg_bytes, msgs.ShootMsg)
+    msg = _try_decode(msg_bytes, msgs.ShootMsg)
+
+    if msg is not None:
         logger.debug(f"Recieved shoot command: {msg}")
         turret.shoot(msg.times)
         return None
-    except Exception as e:
-        logger.debug(e)
 
-    try:
-        msg = msgs.decode(msg_bytes, msgs.RequestStatusMsg)
+    msg = _try_decode(msg_bytes, msgs.RequestStatusMsg)
+
+    if msg is not None:
         logger.debug("Recieved status request")
         return msgs.StatusMsg(turret.base_angle, turret.elev_angle, turret.shots)
-    except Exception as e:
-        logger.debug(e)
 
-    try:
-        msg = msgs.decode(msg_bytes, msgs.ResetMsg)
+    msg = msgs.decode(msg_bytes, msgs.ResetMsg)
+
+    if msg is not None:
         logger.debug("Recieved reset command")
-        turret.move(0, 0)
-        turret.shots = 0
+        turret.reset()
         return None
-    except Exception as e:
-        logger.debug(e)
 
     raise ValueError("Unsupported command")
 
